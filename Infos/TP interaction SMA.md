@@ -22,3 +22,18 @@
 * La qualiter est important pour le rendu
 ![tp](./infotp.png)
 ![sujet](./TP1SMA2020.jpeg)
+
+Rapport : indiquer se qui marche et ce qui ne marche pas
+Prendre un exemple et faire des captures d'écrans pour expliquer étape par étape
+
+
+## Les agents
+Les agents ont une vision global du plateau
+Les agent agissent directement sur la map représentant
+Les agents doivent être en multi threading, on verrouille les cases (mutex,)
+
+## Plusieurs maniere de résolution
+* Ligne par ligne(jusqu'à n-2 ^peu t'être) puis colonne par colonne 
+    pas de hiérarchie mais plutôt si un agent demande à un autre agent de se déplacer, l'agent sollicité regarde si sa ligne est fini et si oui refuse de bouger.
+* Bordure puis on réduit etc -> phénomène de zoom
+* En spiral
