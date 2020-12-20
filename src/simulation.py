@@ -21,7 +21,7 @@ def main():
         agent.start()
     for agent in agents:
         agent.join()
-    print("Le resultat")
+    print("Le résultat")
     print(env)
     print("Le goal")
     print(goalss)

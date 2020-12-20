@@ -16,7 +16,7 @@ class Agent(threading.Thread):
         self.env = env
         self.id = id
         self.pos = position
-    
+
     def run(self):
         print(self.id+" : Je démarre")
         self.goal = self.env.getGoal(self.id)
@@ -47,7 +47,7 @@ class Agent(threading.Thread):
 
     def reflexion(self, messages:list , moves: list):
         """
-        Reflexion of the futur action
+        Reflexion of the future action
         """
         ## Move simple
         cDist  = self.manhattanDist(self.pos,self.goal)

@@ -41,7 +41,7 @@ class Environment(object):
         return self.goals[id]
     
     def move(self, id:str,pos:tuple, newPos:tuple) -> bool:
-        # Lock et délock automatiquement
+        # Lock et unlock automatiquement
         # lock1:threading.Lock = self.__cellLocker[pos[0]][pos[1]]
         # lock2:threading.Lock = self.__cellLocker[newPos[0]][newPos[1]]
         hasMoved = False
@@ -53,6 +53,7 @@ class Environment(object):
         if id == "🔴" and hasMoved :
             print(self.__str__())
         return hasMoved
+
     def sendMail(self, message: Message) -> None:
         if self.__mailBox[message.receiver] is None:
             self.__mailBox[message.receiver] = [message]
