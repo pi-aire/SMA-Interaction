@@ -6,6 +6,13 @@ class Performative(enum.Enum):
     Request = 0
     Informative = 1
 
+class ContentA2(object):
+    """
+        Content pour les agents de type 2
+    """
+    def __init__(self, priority, place, ):
+        
+
 class Message(object):
     """
     Message's class

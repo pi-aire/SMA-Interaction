@@ -74,3 +74,7 @@ class Agent(threading.Thread):
 
     def manhattanDist(self, pos1:tuple, pos2:tuple) -> int:
         return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
+    
+    def filterMessage(self, messages) -> list:
+        for m in messages:
+            
