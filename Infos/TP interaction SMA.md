@@ -19,7 +19,7 @@
 
 ### Rendu
 
-* La qualiter est important pour le rendu
+* La qualité est important pour le rendu
 ![tp](./infotp.png)
 ![sujet](./TP1SMA2020.jpeg)
 
@@ -32,23 +32,23 @@ Les agents ont une vision global du plateau
 Les agent agissent directement sur la map représentant
 Les agents doivent être en multi threading, on verrouille les cases (mutex,)
 
-## Plusieurs maniere de résolution
+## Plusieurs manières de résolution
 * Ligne par ligne(jusqu'à n-2 ^peu t'être) puis colonne par colonne 
     pas de hiérarchie mais plutôt si un agent demande à un autre agent de se déplacer, l'agent sollicité regarde si sa ligne est fini et si oui refuse de bouger.
 * Bordure puis on réduit etc -> phénomène de zoom
 * En spiral
 
 
-## Notes de Richou 
-1. Eviter les mouvements qui augmente la distance de Manhatthan. 
-2. Ne pas bouger quelqu'un bien placer dans un coin. Jamais (sauf sur une grille 2x2)
-3. Si deux mouvement possible avec la même distance de Manhatthan : 
-    - Un seul est libre ? (ou exclusif : ^) -> On y va 
+## Notes de Richou
+1. Eviter les mouvements qui augmente la distance de Manhatthan.
+2. Ne pas bouger quelqu'un bien placé dans un coin. Jamais (sauf sur une grille 2x2)
+3. Si deux mouvement possible avec la même distance de Manhatthan :
+    - Un seul est libre ? (ou exclusif : ^) -> On y va
     - Deux libres ou deux bloqués : Random pour connaitre la destination
 4. Deux niveaux de requêtes : 
     - Bouge stp : (Si il répond non, on cherche une autre solution)
     - Dégage : (Il n'y a pas d'autre solution)
-5. Si B demande à A de bouger et que A accepte, B se met en attente mais peut bouger si une place aussi interressante ou mieux se libère. 
+5. Si B demande à A de bouger et que A accepte, B se met en attente mais peut bouger si une place aussi intéressante ou mieux se libère. 
 6. Monotonic Concession Protocol (diapo 41)
 7. Etape d'une négociation : 
     - Cadrer la négociation
@@ -59,10 +59,10 @@ Les agents doivent être en multi threading, on verrouille les cases (mutex,)
     - Analyser les infos sur les objectifs spécifiques
     - Entamer la négociation
     - Terminer la négociation
-8. Interet commun : Réussir le taquin
+8. Intérêt commun : Réussir le taquin
 9. Négociation bi-latéral pour bouger
 10. Négociation multi-latéral pour une place libre
     - Enchère : Compteur de génance. Si égalité ?
         - Sa propre génance = 2 (Permet de différencier avec les personnes bien placé mais qui doivent bouger.)
     - Si enchère : Qui est le commissaire ?
-11. En cas de besoin de commissaire ou manager -> Celui qui entame l'échange ou la discution. 
+11. En cas de besoin de commissaire ou manager -> Celui qui entame l'échange ou la discussion. 
