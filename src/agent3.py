@@ -1,5 +1,6 @@
 from threading import main_thread
 from environnement3 import *
+import time
 
 class Agent(threading.Thread):
     """
@@ -18,6 +19,8 @@ class Agent(threading.Thread):
         self.id = id
         self.pos = position
         self.nb_moves = 0
+        self.waiting = False
+        self.nextMove = None
 
     def run(self):
         """
@@ -30,14 +33,23 @@ class Agent(threading.Thread):
             if self.myGoalIsAnAngle():
                 break
             messages, moves, freePlace = self.perception()
+            if self.waiting:
+                if self.env.isFreePlace(self.nextMove[0], self.nextMove[1]):
+                    self.action(self.nextMove)
+                    self.waiting = False
+                    self.nextMove = None
+
             move = self.reflexion(messages, moves, freePlace)
+
             if move is not None:
                 if move in freePlace:
                     self.action(move)
-                else:
+                elif not self.waiting:
                     # Envoie du message bouge
                     receiver = self.getReceiver(move)
                     self.communication(receiver, Performative.REQUEST, Request.MOVE)
+                    self.waiting = True
+                    self.nextMove = move
 
     def perception(self):
         """
@@ -70,9 +82,12 @@ class Agent(threading.Thread):
         if self.myGoalIsAnAngle():
             return None
 
-        # Pas de message et goal atteint : Pas de mouvement 
-        if (self.pos == self.goal and not moveMessage):
-            return None
+        # Pas de message et goal atteint : Pas de mouvement
+        # if (self.pos == self.goal and not moveMessage):
+        #     return None
+
+        if (self.pos == self.goal and moveMessage and not len(freePlace) == 0):
+            return freePlace[0]
 
         # Si goal atteint et message : Tente d'aller dans une place vide
         if (self.pos == self.goal and moveMessage):
@@ -90,7 +105,6 @@ class Agent(threading.Thread):
         if len(moves) != 0:
             minDistance = self.env.h + self.env.w
             minMove = None
-            #moveFree = None
             for move in moves:
                 if self.manhattanDist(self.goal, move) < minDistance:
                     minDistance = self.manhattanDist(self.goal, move)
@@ -99,6 +113,11 @@ class Agent(threading.Thread):
                 return minMove
             if (len(freePlace)>0):
                 return freePlace[0]
+            else: 
+                return moves[0]
+
+        if len(freePlace) > 0:
+            return freePlace[0]
 
         return None
 

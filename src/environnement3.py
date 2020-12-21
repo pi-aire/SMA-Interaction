@@ -102,6 +102,9 @@ class Environment(object):
     def getId(self, caseX, caseY):
         return self.grid[caseX][caseY]
 
+    def printRequest(self) -> str:
+        print(self.__str__())
+
     def __str__(self) -> str:
         result = ""
         for line in self.grid:
