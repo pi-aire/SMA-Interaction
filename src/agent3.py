@@ -30,27 +30,17 @@ class Agent(threading.Thread):
         print(self.id+" : Je démarre")
         self.goal = self.env.getGoal(self.id)
         for i in range(500000):
-            # Placé ici afin de couper le thread
-            if self.myGoalIsAnAngle():
-                #break
-                # Mauvais plan : Si deux angles sont pris, l'émoji entre les deux est coincé
-                pass
-
-            else :
-                messages, moves, freePlace = self.perception()
-                move = self.reflexion(messages, moves, freePlace)
-                if move is not None:
-                    if move in freePlace:
-                        self.action(move)
-                    elif not self.waiting:
-                        # Envoie du message bouge
-                        receiver = self.getReceiver(move)
-                        self.communication(receiver, Performative.REQUEST, Request.MOVE)
-                        self.waiting = True
-                        self.nextMove = move
-            # Pour voir que ça évolue pas
-            if i > 10 and i % 100000 == 0:
-                self.env.printRequest()
+            messages, moves, freePlace = self.perception()
+            move = self.reflexion(messages, moves, freePlace)
+            if move is not None:
+                if move in freePlace:
+                    self.action(move)
+                elif not self.waiting:
+                    # Envoie du message bouge
+                    receiver = self.getReceiver(move)
+                    self.communication(receiver, Performative.REQUEST, Request.MOVE)
+                    self.waiting = True
+                    self.nextMove = move
 
     def perception(self):
         """
@@ -74,18 +64,14 @@ class Agent(threading.Thread):
     def reflexion(self, messages:list , moves: list, freePlace: list):
         """
         Reflexion of the future action
-        Retourne None ou la case de destination idéale ou la case ou libre
         """
         moveMessage, maxId = self.isThereMovementMessage(messages)
-
-        #Si on est sur le goal et qu'on demande pas de bouger, on ne bouge pas
         if self.pos == self.goal and not moveMessage:
             return None
-        
         if moveMessage:
-            self.waiting = False
-            self.nextMove = None
             if len(freePlace) > 0:
+                self.waiting = False
+                self.nextMove = None
                 return freePlace[0]
             else:
                 if len(moves) != 0:
@@ -99,9 +85,11 @@ class Agent(threading.Thread):
                         if self.manhattanDist(self.goal, move) == minDistance:
                             minMove.append(move)
                     random.shuffle(minMove)
+                    self.waiting = False
+                    self.nextMove = None
                     return minMove[0]
                 else:
-                    return None
+                    return self.choiceMove()
         else:
             if self.waiting:
                 if self.env.isFreePlace(self.nextMove[0], self.nextMove[1]):
@@ -123,11 +111,7 @@ class Agent(threading.Thread):
                     return minMove
             elif self.pos == self.goal:
                 return None
-            else:
-                print("2 ", self.id, " ma pos: ", self.pos, "mon goal: ", self.goal)
-        print("3 ma pos: ", self.pos, "mon goal: ", self.goal)
         return None
-
 
     def communication(self, dest:int, p:Performative, m:Request):
         """
@@ -159,26 +143,11 @@ class Agent(threading.Thread):
         futureManhattanDist = self.manhattanDist((posX, posY), self.goal)
         return actualManhattanDist > futureManhattanDist
 
-    def filterMessage(self, messages) -> list:
-        # On selectionne les messages des agents supérieurs
-        # On regarde si la demande est toujours d'actualité (l'agent a pu bouger entre temps)
-        for m in messages:
-            pass
-
     def getNbMoves(self) -> int:
         """
         Renvoie le nombre de mouvements de l'agent
         """
         return self.nb_moves
-
-    def myGoalIsAnAngle(self) -> bool:
-        """
-        Signale si l'agent est dans un  angle et si c'est son but
-        """
-        if not (self.pos[0] == self.goal[0] and self.pos[1] == self.goal[1]):
-            return False
-        if ((self.pos[0],self.pos[1]) in self.env.getAngle()):
-            return True
 
     def isThereMovementMessage(self, messages) -> tuple:
         """
@@ -197,9 +166,15 @@ class Agent(threading.Thread):
         return False, None
 
     def getReceiver(self, caseDest) -> str:
+        """
+        Donne le destinataire du message
+        """
         return (self.env.getId(caseDest[0], caseDest[1]))
 
     def choiceMove(self):
+        """
+        Choisi une case aux hasard
+        """
         potentialDest = []
         for dir in [(0,1),(1,0),(0,-1),(-1,0)]:
             newx =  self.pos[0] + dir[0]
