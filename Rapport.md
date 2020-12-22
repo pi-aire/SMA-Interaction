@@ -1,4 +1,4 @@
-# SMA -  Interraction multi-agent
+# SMA -  Interaction multi-agent
 
 ### BRUNEAU Richard - VASLIN Pierre
 
@@ -10,10 +10,10 @@ Brouillon :
 
 ## Modélisation du système multi-agent
 
-Nous avons choisi de modéliser notre SMA avec deux classes : 
+Nous avons choisi de modéliser notre SMA avec deux classes :
 
-- L'environnement, qui peut s'apparenter au plateau du taquin 
-- L'agent, qui doit se déplacer dans le taquin pour atteindre son but, aussi appelé la case dans l'énoncé. 
+- L'environnement, qui peut s'apparenter au plateau du taquin
+- L'agent, qui doit se déplacer dans le taquin pour atteindre son but, aussi appelé la case dans l'énoncé.
 
 ## Réalisation d'un taquin simplifié
 
@@ -25,8 +25,19 @@ L'objectif à atteindre est le suivant :
 
 ![Grille objectif](./images/Simple_objectif.png)
 
-Malheureusement, le programme s'arrête ici : 
+Malheureusement, le programme s'arrête ici :
 
 ![Grille finale](./images/Simple_final.png) 
 
-Il est aisé de déduire que le programme s'arrête car des agents sont bien placés mais bloquent la circulation pour d'autres agents. Notre modélisation du SMA semble pertinente, nous allons faire communiquer les agent entre eux afin de pouvoir résoudre les conflits sur les agents bloquants.=
+Il est aisé de déduire que le programme s'arrête car des agents sont bien placés mais bloquent la circulation pour d'autres agents. Notre modélisation du SMA semble pertinente, nous allons faire communiquer les agent entre eux afin de pouvoir résoudre les conflits sur les agents bloquants.
+
+## Hiérarchie des agents
+
+
+
+## Type de message 
+
+Nous avons défini différents types de messages :
+
+- Move : Pour demander à un agent de se déplacer
+- CantMove : Pour signifier à un autre agent que l'expéditeur ne peut pas se déplacer

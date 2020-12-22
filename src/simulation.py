@@ -1,8 +1,9 @@
 from environnement import *
-from agent import *
+from agent2 import *
 
 def main():
-    env = Environment(3,3)
+    agentsMap = dict()
+    env = Environment(5,5,agentsMap)
     ids = ["🔴","🔆","⌛","⭐","🤡","🥔","🔥","🏈"]
     # positions = [(0,2),(0,3),(1,2),(2,3),(4,4)]
     # goals = [(0,0),(0,1),(0,3),(0,2),(0,)]
@@ -11,11 +12,13 @@ def main():
     goals = [(0,0),(0,1),(0,2),(2,0),(1,1),(2,1),(1,0),(1,2)]
     env.setGrid(ids,positions,goals)
     agents = []
+    
     for i in range(len(ids)):
-        agents.append(Agent(env,ids[i],positions[i]))
+        tmp = Agent(env,ids[i],positions[i])
+        agents.append(tmp)
+        agentsMap[ids[i]] = tmp
+    env.agents = agentsMap
     print(env)
-    goalss = Environment(3,3)
-    goalss.setGrid(ids,goals,goals)
     
     for agent in agents:
         agent.start()
@@ -23,7 +26,12 @@ def main():
         agent.join()
     print("Le résultat")
     print(env)
+    
+    # Juste pour le display du goal
+    goalss = Environment(5,5,agentsMap)
+    goalss.setGrid(ids,goals,goals)
     print("Le goal")
     print(goalss)
+
 if __name__ == '__main__':
     main()
