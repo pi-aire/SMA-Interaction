@@ -1,5 +1,5 @@
-from environnement3 import *
-from agent3 import *
+from environnement_communiquant import *
+from agent_communiquant import *
 
 def main():
     env = Environment(3,3)

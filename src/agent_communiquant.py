@@ -1,5 +1,5 @@
 from threading import main_thread
-from environnement3 import *
+from environnement_communiquant import *
 import time
 import random
 
