@@ -13,9 +13,9 @@ class Content(object):
 
     def __init__(self, request: Request, priority=0, positionS=None, positionR=None):
         self.request = request
-        self.priority = priority  # La priorité peux être propagé si l'action nécessite
-        self.positionS = positionS # Position du sender quand le message à été envoyé
-        self.positionR = positionR # Position du reciever quand le message à été send
+        self.priority = priority  # La priorité peux être propagée si l'action nécessite
+        self.positionS = positionS # Position du sender quand le message a été envoyé
+        self.positionR = positionR # Position du receiver quand le message a été send
 
 class Agent(threading.Thread):
     """
@@ -79,11 +79,11 @@ class Agent(threading.Thread):
                 return self.moveWait[selection.sender]
                 #On réalise le move que l'on souhaite
             elif len(self.askNeighbours) == 0:
-                # Aucun voisin peux ce déplacer
+                # Aucun voisin peux se déplacer
                 print(f"{self.id} aucun voisin veut se déplacer")
                 self.isWaiting = False
         else:
-            # On cherche les message interressant
+            # On cherche les messages interressants
             selection = self.bestRequest(messages)
             moves = self.env.moveAvailable(self.pos)
             if selection is None:
@@ -140,15 +140,6 @@ class Agent(threading.Thread):
                             self.moveWait[idN] = n
                     self.isWaiting = True
                     return None
-                
-
-    # def communication(self, dest: int, p: Performative, m: Message):
-    #     """
-    #     Send the message to the other agent
-    #     """
-    #     # New message
-    #     m(self.id, dest, p, m)
-    #     self.env.sendMail(m)
 
     def action(self, newPos: tuple):
         """

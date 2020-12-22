@@ -1,5 +1,5 @@
 from environnement import *
-
+import random
 
 class Content(object):
     """
@@ -9,7 +9,6 @@ class Content(object):
     def __init__(self, pSender, pReceiver, priority):
         self.pSender = pSender  # Position du sender quand le message à été envoyé
         self.pReceiver = pReceiver  # Position du reciever quand le message à été send
-        self.prioritySender = priority
 
 class Agent(threading.Thread):
     """
@@ -37,12 +36,12 @@ class Agent(threading.Thread):
         self.isSatisfied = self.pos[0] == self.goal[0] and self.pos[1] == self.goal[1]
 
     def run(self):
-        print(self.id+" : Je démarre")
-        print(self.id + " : Lancement")
-        print(f"{self.id}: rang {self.rank}")
+        # print(self.id+" : Je démarre")
+        # print(self.id + " : Lancement")
+        # print(f"{self.id}: rang {self.rank}")
         self.barrier.wait()
         # endSolution = False
-        counter = 1000
+        counter = 50000
         # while self.pos[0] != self.goal[0] or self.pos[1] != self.goal[1]:
         while counter > 0:
             messages, moves = self.perception()
@@ -78,38 +77,52 @@ class Agent(threading.Thread):
             return None
         
         needToMove = False
+        sendersId = []
         # On regarde les messages
         if len(messages) != 0:
             for m in messages:
-                # On regarde si entre temps, les agents ne ses sont pas déplacé
+                # On regarde si entre temps, les agents ne se sont pas déplacés
                 if (self.env.agents[m.sender].pos == m.content.pSender and
                         self.pos == m.content.pReceiver):
                     needToMove = True
-                    break
+                    sendersId.append(m.sender)
 
-        # on essaye de se déplacer au plus prét de l'objectif
+        # on essaye de se déplacer au plus près de l'objectif
         cDist = self.manhattanDist(self.pos, self.goal)
         if len(moves) != 0:
             newDistance = [self.manhattanDist(
                 self.goal, npos) for npos in moves]
+            random.shuffle(newDistance)
             minVal = min(newDistance)
             if needToMove or (not self.isSatisfied and minVal < cDist):  # On se déplace seulement pour ce rapprocher de l'objectif
                 return moves[newDistance.index(minVal)]
         
         # on cherche les voisins et on prend celui qui permet de se rapprocher le plus de l'objectif
         neighbours = self.env.neighbours(self.pos, self.rank)
+        if needToMove:
+            # Dans le cas d'une demande de déplacement, on ne souhaite pas renvoyer la demande au voisin qui lui on envyé le message
+            for id in sendersId:
+                try:
+                    neighbours.remove(tuple(self.env.agents[id].pos))
+                except:
+                    pass
         if len(neighbours) != 0:
             newDistance = [self.manhattanDist(self.goal, npos)
                         for npos in neighbours]
             minVal = min(newDistance)
+            random.shuffle(newDistance)
             pNeighbour = neighbours[newDistance.index(minVal)]
             idNeighbour = self.env.grid[pNeighbour[0]][pNeighbour[1]]
             
-            # on envoye le message pour que le voisin
+            # on envoie le message au voisin où je veux aller
             self.env.sendMail(
                 Message(self.id, idNeighbour,
                         Performative.Request,
                         Content(self.pos, pNeighbour, self.rank)))
+        
+
+
+        
         return None
 
     def action(self, newPos: tuple):
