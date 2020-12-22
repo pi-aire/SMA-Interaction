@@ -4,7 +4,7 @@ class Agent(threading.Thread):
     """
     Agent's class
     """
-    def __init__(self, env:Environment, id:str, position:tuple) -> None:
+    def __init__(self, barriere, env:Environment, id:str, position:tuple) -> None:
         """
         Init
         Args:
@@ -21,7 +21,7 @@ class Agent(threading.Thread):
         print(self.id+" : Je démarre")
         self.goal = self.env.getGoal(self.id)
         # while self.pos[0] != self.goal[0] or self.pos[1] != self.goal[1]:
-        for i in range(500000):
+        for i in range(1000):
             messages, moves = self.perception()
             move = self.reflexion(messages, moves)
             if not (move is None):
