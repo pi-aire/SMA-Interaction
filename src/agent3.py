@@ -1,6 +1,7 @@
 from threading import main_thread
 from environnement3 import *
 import time
+import random
 
 class Agent(threading.Thread):
     """
@@ -31,25 +32,25 @@ class Agent(threading.Thread):
         for i in range(500000):
             # Placé ici afin de couper le thread
             if self.myGoalIsAnAngle():
-                break
-            messages, moves, freePlace = self.perception()
-            if self.waiting:
-                if self.env.isFreePlace(self.nextMove[0], self.nextMove[1]):
-                    self.action(self.nextMove)
-                    self.waiting = False
-                    self.nextMove = None
+                #break
+                # Mauvais plan : Si deux angles sont pris, l'émoji entre les deux est coincé
+                pass
 
-            move = self.reflexion(messages, moves, freePlace)
-
-            if move is not None:
-                if move in freePlace:
-                    self.action(move)
-                elif not self.waiting:
-                    # Envoie du message bouge
-                    receiver = self.getReceiver(move)
-                    self.communication(receiver, Performative.REQUEST, Request.MOVE)
-                    self.waiting = True
-                    self.nextMove = move
+            else :
+                messages, moves, freePlace = self.perception()
+                move = self.reflexion(messages, moves, freePlace)
+                if move is not None:
+                    if move in freePlace:
+                        self.action(move)
+                    elif not self.waiting:
+                        # Envoie du message bouge
+                        receiver = self.getReceiver(move)
+                        self.communication(receiver, Performative.REQUEST, Request.MOVE)
+                        self.waiting = True
+                        self.nextMove = move
+            # Pour voir que ça évolue pas
+            if i > 10 and i % 100000 == 0:
+                self.env.printRequest()
 
     def perception(self):
         """
@@ -75,51 +76,58 @@ class Agent(threading.Thread):
         Reflexion of the future action
         Retourne None ou la case de destination idéale ou la case ou libre
         """
-        moveMessage = self.isThereMovementMessage(messages)
+        moveMessage, maxId = self.isThereMovementMessage(messages)
 
-        # Si on est dans un angle et qu'on a atteint son but, on ne bouge pas
-        # Normalement, ne valide jamais le if car dans run
-        if self.myGoalIsAnAngle():
+        #Si on est sur le goal et qu'on demande pas de bouger, on ne bouge pas
+        if self.pos == self.goal and not moveMessage:
             return None
-
-        # Pas de message et goal atteint : Pas de mouvement
-        # if (self.pos == self.goal and not moveMessage):
-        #     return None
-
-        if (self.pos == self.goal and moveMessage and not len(freePlace) == 0):
-            return freePlace[0]
-
-        # Si goal atteint et message : Tente d'aller dans une place vide
-        if (self.pos == self.goal and moveMessage):
-            if freePlace == []:
-                return None
-            return freePlace[0]
-
-        # Si il y a qu'un mouvement possible, on le renvoit
-        if len(moves)==1 and len(freePlace) == 0:
-            return moves[0]
-
-        # Si goal pas atteint : Tente d'aller :
-        # 1. La destination la plus courte 
-        # 2. A défaut libre
-        if len(moves) != 0:
-            minDistance = self.env.h + self.env.w
-            minMove = None
-            for move in moves:
-                if self.manhattanDist(self.goal, move) < minDistance:
-                    minDistance = self.manhattanDist(self.goal, move)
-                    minMove = move
-            if self.env.isFreePlace(minMove[0], minMove[1]):
-                return minMove
-            if (len(freePlace)>0):
+        
+        if moveMessage:
+            self.waiting = False
+            self.nextMove = None
+            if len(freePlace) > 0:
                 return freePlace[0]
-            else: 
-                return moves[0]
-
-        if len(freePlace) > 0:
-            return freePlace[0]
-
+            else:
+                if len(moves) != 0:
+                    minDistance = self.env.h + self.env.w
+                    minMove = []
+                    for move in moves:
+                        if self.manhattanDist(self.goal, move) < minDistance:
+                            minDistance = self.manhattanDist(self.goal, move)
+                            minMove.clear()
+                            minMove.append(move)
+                        if self.manhattanDist(self.goal, move) == minDistance:
+                            minMove.append(move)
+                    random.shuffle(minMove)
+                    return minMove[0]
+                else:
+                    return None
+        else:
+            if self.waiting:
+                if self.env.isFreePlace(self.nextMove[0], self.nextMove[1]):
+                    self.waiting = False
+                    self.nextMove = None
+                    return self.nextMove
+            if len(moves) != 0:
+                minDistance = self.env.h + self.env.w
+                minMove = None
+                for move in moves:
+                    if self.manhattanDist(self.goal, move) < minDistance:
+                        minDistance = self.manhattanDist(self.goal, move)
+                        minMove = move
+                if self.env.isFreePlace(minMove[0], minMove[1]):
+                    return minMove
+                if (len(freePlace)>0):
+                    return freePlace[0]
+                else: 
+                    return minMove
+            elif self.pos == self.goal:
+                return None
+            else:
+                print("2 ", self.id, " ma pos: ", self.pos, "mon goal: ", self.goal)
+        print("3 ma pos: ", self.pos, "mon goal: ", self.goal)
         return None
+
 
     def communication(self, dest:int, p:Performative, m:Request):
         """
@@ -172,17 +180,32 @@ class Agent(threading.Thread):
         if ((self.pos[0],self.pos[1]) in self.env.getAngle()):
             return True
 
-    def isThereMovementMessage(self, messages) -> bool:
+    def isThereMovementMessage(self, messages) -> tuple:
         """
         Signale à l'agent si il a message lui demandant de bouger
         """
         for message in messages:
             if message.getContent() == Request.MOVE:
+                sender = message.sender
                 for i, mess in enumerate(messages):
                     if mess.getContent() == Request.MOVE:
                         # TODO : Répondre au destinataire (utile?)
+                        if mess.getSender() > sender:
+                            sender = mess.getSender
                         messages.pop(i)
-                return True
+                return True, sender
+        return False, None
 
     def getReceiver(self, caseDest) -> str:
         return (self.env.getId(caseDest[0], caseDest[1]))
+
+    def choiceMove(self):
+        potentialDest = []
+        for dir in [(0,1),(1,0),(0,-1),(-1,0)]:
+            newx =  self.pos[0] + dir[0]
+            newy =  self.pos[1] + dir[1]
+            if (newx < self.env.h and newx >= 0 and
+                newy < self.env.w and newy >= 0):
+                potentialDest.append((newx, newy))
+        random.shuffle(potentialDest)
+        return potentialDest[0]

@@ -40,6 +40,9 @@ class Message(object):
         """
         return self.content
 
+    def getSender(self):
+        return self.sender
+
 class Environment(object):
     """
     Environment's class
