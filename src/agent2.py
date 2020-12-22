@@ -1,6 +1,16 @@
 from environnement import *
 
 
+class Content(object):
+    """
+        Content pour les agents de type 2
+    """
+
+    def __init__(self, pSender=None, pReceiver=None):
+        self.pSender = pSender  # Position du sender quand le message à été envoyé
+        self.pReceiver = pReceiver  # Position du reciever quand le message à été send
+
+
 class Agent(threading.Thread):
     """
     Agent's class
@@ -15,29 +25,21 @@ class Agent(threading.Thread):
             goal : the goal of the agent
         """
         threading.Thread.__init__(self)
-        self.env: Environment = env
+        self.env = env
         self.id = id
         self.pos = position
-        self.nb_moves = 0
-        # On calul le rang de l'agent
-        self.rank = (self.env.h - self.pos[1]) * self.env.w
-        self.rank += (self.env.w - self.pos[0])
 
     def run(self):
         print(self.id+" : Je démarre")
         self.goal = self.env.getGoal(self.id)
         # while self.pos[0] != self.goal[0] or self.pos[1] != self.goal[1]:
-        for i in range(500):
-            
-            messages = self.perception()
-            move = self.reflexion(messages)
+        for i in range(500000):
+            messages, moves = self.perception()
+            move = self.reflexion(messages, moves)
             if not (move is None):
                 self.action(move)
-            # On si l'agent n'a pas atteind son objejectif
             if self.pos[0] == self.goal[0] and self.pos[1] == self.goal[1]:
-                # print(f"{self.id} : nb déplacement {self.nb_moves}")
-                pass
-                
+                break
 
     def perception(self):
         """
@@ -45,71 +47,52 @@ class Agent(threading.Thread):
         """
         self.goal = self.env.getGoal(self.id)
         messages = self.env.receiveMail(self.id)
-        return messages
+        moveAvailable = []
+        for dir in [(0, 1), (1, 0), (0, -1), (-1, 0)]:
+            newx = self.pos[0] + dir[0]
+            newy = self.pos[1] + dir[1]
+            if (newx < self.env.h and newx >= 0 and
+                newy < self.env.w and newy >= 0 and
+                    self.env.grid[newx][newy] == ""):
+                moveAvailable.append((newx, newy))
+        return messages, moveAvailable
 
-    def reflexion(self, messages: list):
+    def reflexion(self, messages: list, moves: list):
         """
         Reflexion of the future action
         """
-        # On cherche les message interressant
-        selection = self.bestRequest(messages)
-        moves = self.env.moveAvailable(self.pos)
-        if selection is None:
-            if len(moves) != 0:
-                # On choisi un déplacement qui se rapproche de la solution
-                newDistance = [self.manhattanDist(
-                    self.goal, npos) for npos in moves]
-                minVal = min(newDistance)
-                if "⌛" == self.id:
-                    print(f"{self.manhattanDist(self.pos, self.goal)} > {self.manhattanDist(moves[newDistance.index(minVal)], self.goal)}")
-                if self.manhattanDist(self.pos, self.goal) > self.manhattanDist(moves[newDistance.index(minVal)], self.goal):
-                    return moves[newDistance.index(minVal)]
-                else:
-                    return None
-            else:
-                # On cherche les agents voisins
-                neighbours = self.env.neighbours(self.pos,self.rank)                    
-                if len(neighbours) == 0:
-                    return None
-                newDistance = [self.manhattanDist(
-                    self.goal, npos) for npos in neighbours]
-                minVal = min(newDistance)
-                posi = neighbours[newDistance.index(minVal)]
-                idN = self.env.grid[posi[0]][posi[1]]
-                if idN != "":
-                    self.env.sendMail(
-                        Message(self.id, idN, Performative.Request, ContentA2(Request.Move, self.rank, self.pos, posi)))
-                return None
-        else:
-            if len(moves) != 0:
-                # Libre peut faire de la place
-                # On choisi un déplacement libre
-                newDistance = [self.manhattanDist(
-                    self.goal, npos) for npos in moves]
-                minVal = min(newDistance)
+        needToMove = False
+        # On regarde les messages
+        if len(messages) != 0:
+            for m in messages:
+                # On regarde si entre temps, les agents ne ses sont pas déplacé
+                if (self.env.agents[m.sender].pos == m.content.pSender and
+                        self.pos == m.content.pReceiver):
+                    needToMove = True
+
+        # on essaye de se déplacer au plus prét de l'objectif
+        cDist = self.manhattanDist(self.pos, self.goal)
+        if len(moves) != 0:
+            newDistance = [self.manhattanDist(
+                self.goal, npos) for npos in moves]
+            minVal = min(newDistance)
+            if needToMove or minVal < cDist:  # On se déplace seulement pour ce rapprocher de l'objectif
                 return moves[newDistance.index(minVal)]
-            else:
-                # On fait une requête au autre voisin
-                c = ContentA2(Request.Move,
-                                selection.content.priority,
-                                selection.content.positionS,
-                                selection.content.positionR)
 
-                for n in self.env.neighbours(self.pos,selection.content.priority):
-                    idN = self.env.grid[n[0]][n[1]]
-                    if idN != "" and idN != selection.sender:
-                        self.env.sendMail(
-                            Message(self.id, idN, Performative.Request, c))
-                return None
-                
-
-    # def communication(self, dest: int, p: Performative, m: Message):
-    #     """
-    #     Send the message to the other agent
-    #     """
-    #     # New message
-    #     m(self.id, dest, p, m)
-    #     self.env.sendMail(m)
+        # on cherche les voisins et on prend celui qui permet de se rapprocher le plus de l'objectif
+        neighbours = self.env.neighbours(self.pos)
+        newDistance = [self.manhattanDist(self.goal, npos)
+                       for npos in neighbours]
+        minVal = min(newDistance)
+        pNeighbour = neighbours[newDistance.index(minVal)]
+        idNeighbour = self.env.grid[pNeighbour[0]][pNeighbour[1]]
+        
+        # on envoye le message pour que le voisin
+        self.env.sendMail(
+            Message(self.id, idNeighbour,
+                    Performative.Request,
+                    Content(self.pos, pNeighbour)))
+        return None
 
     def action(self, newPos: tuple):
         """
@@ -117,32 +100,6 @@ class Agent(threading.Thread):
         """
         if self.env.move(self.id, self.pos, newPos):
             self.pos = newPos
-            self.nb_moves += 1
 
     def manhattanDist(self, pos1: tuple, pos2: tuple) -> int:
         return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
-
-    def filterInformation(self, messages: list) -> list:
-        selection = []
-        for m in messages:
-            if (m.performative == Performative.Informative
-                and (m.content.request == Request.Yes or
-                     m.content.request == Request.No)):
-                selection.append(m)
-        return selection
-
-    def bestRequest(self, messages: list) -> list:
-        # On selectionne les messages des agents supérieurs
-        selection = None
-        maxPriority = -1
-        for m in messages:
-            if m.performative == Performative.Request and m.content.request == Request.Move:
-                if (m.content.priority >= self.rank
-                        and maxPriority < m.content.priority):
-                    maxPriority = m.content.priority
-                    selection = m
-                else:
-                    # on repond négativement
-                    self.env.sendMail(
-                        Message(self.id, m.receiver, Performative.Informative, ContentA2(Request.No)))
-        return selection

@@ -7,32 +7,12 @@ class Performative(enum.Enum):
     Request = 0
     Informative = 1
 
-
-class Request(enum.Enum):
-    Move = 0
-    CantMove = 1  # Très rare
-    Yes = 2
-    No = 3
-
-
-class ContentA2(object):
-    """
-        Content pour les agents de type 2
-    """
-
-    def __init__(self, request: Request, priority=0, positionS=None, positionR=None):
-        self.request = request
-        self.priority = priority  # La priorité peux être propagé si l'action nécessite
-        self.positionS = positionS # Position du sender quand le message à été envoyé
-        self.positionR = positionR # Position du reciever quand le message à été send
-
-
 class Message(object):
     """
     Message's class
     """
 
-    def __init__(self, sender: str, receiver: str, performative: Performative, content: ContentA2) -> None:
+    def __init__(self, sender: str, receiver: str, performative: Performative, content) -> None:
         self.sender: str = sender
         self.receiver: str = receiver
         self.performative: Performative = performative
@@ -86,16 +66,17 @@ class Environment(object):
     def receiveMail(self, id: str) -> list:
         return self.__mailBox.get(id, [])
 
-    def neighbours(self,position:tuple, rank:int) -> list:
+    def neighbours(self,position:tuple, rank:int = -1) -> list:
         neighbours = []
         for dir in [(0, 1), (1, 0), (0, -1), (-1, 0)]:
             newx = position[0] + dir[0]
             newy = position[1] + dir[1]
             if (newx < self.h and newx >= 0 and
                 newy < self.w and newy >= 0 and
-                self.grid[newx][newy] != "" and
+                self.grid[newx][newy] != ""):
+                if (rank == -1 or
                 rank >= self.agents[self.grid[newx][newy]].rank):
-                neighbours.append((newx,newy))
+                    neighbours.append((newx,newy))
         return neighbours
 
     def moveAvailable(self, position:tuple) -> list:
