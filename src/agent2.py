@@ -6,17 +6,17 @@ class Content(object):
         Content pour les agents de type 2
     """
 
-    def __init__(self, pSender=None, pReceiver=None):
+    def __init__(self, pSender, pReceiver, priority):
         self.pSender = pSender  # Position du sender quand le message à été envoyé
         self.pReceiver = pReceiver  # Position du reciever quand le message à été send
-
+        self.prioritySender = priority
 
 class Agent(threading.Thread):
     """
     Agent's class
     """
 
-    def __init__(self, env: Environment, id: str, position: tuple) -> None:
+    def __init__(self, barrier,env: Environment, id: str, position: tuple) -> None:
         """
         Init
         Args:
@@ -28,24 +28,36 @@ class Agent(threading.Thread):
         self.env = env
         self.id = id
         self.pos = position
+        self.nb_move = 0
+        self.barrier = barrier
+        self.goal = self.env.getGoal(self.id)
+        # On calul le rang de l'agent
+        self.rank = (self.env.h - self.goal[0]) * self.env.w
+        self.rank -= self.goal[1]
 
     def run(self):
         print(self.id+" : Je démarre")
-        self.goal = self.env.getGoal(self.id)
+        print(self.id + " : Lancement")
+        print(f"{self.id}: rang {self.rank}")
+        self.barrier.wait()
         # while self.pos[0] != self.goal[0] or self.pos[1] != self.goal[1]:
-        for i in range(500000):
+        for i in range(1000):
             messages, moves = self.perception()
             move = self.reflexion(messages, moves)
             if not (move is None):
                 self.action(move)
-            if self.pos[0] == self.goal[0] and self.pos[1] == self.goal[1]:
-                break
+            self.barrier.wait()
+            
+            # if self.pos[0] == self.goal[0] and self.pos[1] == self.goal[1]:
+            #     break
+        print(f"{self.id}: nombre de mouvement {self.nb_move}")
 
     def perception(self):
         """
         Perception of the environment, we ask to the environment
         """
         self.goal = self.env.getGoal(self.id)
+        self.isSatisfied = self.pos[0] == self.goal[0] and self.pos[1] == self.goal[1]
         messages = self.env.receiveMail(self.id)
         moveAvailable = []
         for dir in [(0, 1), (1, 0), (0, -1), (-1, 0)]:
@@ -69,6 +81,7 @@ class Agent(threading.Thread):
                 if (self.env.agents[m.sender].pos == m.content.pSender and
                         self.pos == m.content.pReceiver):
                     needToMove = True
+                    break
 
         # on essaye de se déplacer au plus prét de l'objectif
         cDist = self.manhattanDist(self.pos, self.goal)
@@ -76,22 +89,24 @@ class Agent(threading.Thread):
             newDistance = [self.manhattanDist(
                 self.goal, npos) for npos in moves]
             minVal = min(newDistance)
-            if needToMove or minVal < cDist:  # On se déplace seulement pour ce rapprocher de l'objectif
+            if needToMove or (not self.isSatisfied and minVal < cDist):  # On se déplace seulement pour ce rapprocher de l'objectif
                 return moves[newDistance.index(minVal)]
-
+        if self.isSatisfied:
+            return None
         # on cherche les voisins et on prend celui qui permet de se rapprocher le plus de l'objectif
-        neighbours = self.env.neighbours(self.pos)
-        newDistance = [self.manhattanDist(self.goal, npos)
-                       for npos in neighbours]
-        minVal = min(newDistance)
-        pNeighbour = neighbours[newDistance.index(minVal)]
-        idNeighbour = self.env.grid[pNeighbour[0]][pNeighbour[1]]
-        
-        # on envoye le message pour que le voisin
-        self.env.sendMail(
-            Message(self.id, idNeighbour,
-                    Performative.Request,
-                    Content(self.pos, pNeighbour)))
+        neighbours = self.env.neighbours(self.pos, self.rank)
+        if len(neighbours) != 0:
+            newDistance = [self.manhattanDist(self.goal, npos)
+                        for npos in neighbours]
+            minVal = min(newDistance)
+            pNeighbour = neighbours[newDistance.index(minVal)]
+            idNeighbour = self.env.grid[pNeighbour[0]][pNeighbour[1]]
+            
+            # on envoye le message pour que le voisin
+            self.env.sendMail(
+                Message(self.id, idNeighbour,
+                        Performative.Request,
+                        Content(self.pos, pNeighbour, self.rank)))
         return None
 
     def action(self, newPos: tuple):
@@ -99,6 +114,7 @@ class Agent(threading.Thread):
         Manage the action of the agent in the environment
         """
         if self.env.move(self.id, self.pos, newPos):
+            self.nb_move += 1
             self.pos = newPos
 
     def manhattanDist(self, pos1: tuple, pos2: tuple) -> int:

@@ -64,7 +64,10 @@ class Environment(object):
             self.__mailBox[message.receiver].append(message)
 
     def receiveMail(self, id: str) -> list:
-        return self.__mailBox.get(id, [])
+        tmp = list(self.__mailBox.get(id, []))
+        if tmp != []:
+            self.__mailBox.pop(id)
+        return tmp
 
     def neighbours(self,position:tuple, rank:int = -1) -> list:
         neighbours = []

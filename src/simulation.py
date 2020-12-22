@@ -1,3 +1,4 @@
+from threading import Barrier
 from environnement import *
 from agent2 import *
 
@@ -12,9 +13,9 @@ def main():
     goals = [(0,0),(0,1),(0,2),(2,0),(1,1),(2,1),(1,0),(1,2)]
     env.setGrid(ids,positions,goals)
     agents = []
-    
+    b= Barrier(len(ids))
     for i in range(len(ids)):
-        tmp = Agent(env,ids[i],positions[i])
+        tmp = Agent(b,env,ids[i],positions[i])
         agents.append(tmp)
         agentsMap[ids[i]] = tmp
     env.agents = agentsMap
