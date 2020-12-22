@@ -34,22 +34,23 @@ class Agent(threading.Thread):
         # On calul le rang de l'agent
         self.rank = (self.env.h - self.goal[0]) * self.env.w
         self.rank -= self.goal[1]
+        self.isSatisfied = self.pos[0] == self.goal[0] and self.pos[1] == self.goal[1]
 
     def run(self):
         print(self.id+" : Je démarre")
         print(self.id + " : Lancement")
         print(f"{self.id}: rang {self.rank}")
         self.barrier.wait()
+        # endSolution = False
+        counter = 1000
         # while self.pos[0] != self.goal[0] or self.pos[1] != self.goal[1]:
-        for i in range(1000):
+        while counter > 0:
             messages, moves = self.perception()
             move = self.reflexion(messages, moves)
             if not (move is None):
                 self.action(move)
             self.barrier.wait()
-            
-            # if self.pos[0] == self.goal[0] and self.pos[1] == self.goal[1]:
-            #     break
+            counter -= 1
         print(f"{self.id}: nombre de mouvement {self.nb_move}")
 
     def perception(self):
@@ -73,6 +74,9 @@ class Agent(threading.Thread):
         """
         Reflexion of the future action
         """
+        if self.isSatisfied and self.env.isLock(self.id,self.rank):
+            return None
+        
         needToMove = False
         # On regarde les messages
         if len(messages) != 0:
@@ -91,8 +95,7 @@ class Agent(threading.Thread):
             minVal = min(newDistance)
             if needToMove or (not self.isSatisfied and minVal < cDist):  # On se déplace seulement pour ce rapprocher de l'objectif
                 return moves[newDistance.index(minVal)]
-        if self.isSatisfied:
-            return None
+        
         # on cherche les voisins et on prend celui qui permet de se rapprocher le plus de l'objectif
         neighbours = self.env.neighbours(self.pos, self.rank)
         if len(neighbours) != 0:

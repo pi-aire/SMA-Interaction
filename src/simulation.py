@@ -2,6 +2,10 @@ from threading import Barrier
 from environnement import *
 from agent2 import *
 
+def randomPosition(nbAgent):
+    # en cours
+    pass
+
 def main():
     agentsMap = dict()
     env = Environment(5,5,agentsMap)

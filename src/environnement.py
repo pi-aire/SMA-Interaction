@@ -32,6 +32,7 @@ class Environment(object):
         self.w = width
         self.lo = threading.Lock()
         self.agents = agents
+        self.state = (0,False)
 
     def setGrid(self, ids: list, positions: list, goals: list) -> None:
         if len(ids) != len(positions):
@@ -93,6 +94,25 @@ class Environment(object):
                 moves.append((newx, newy))
         return moves
     
+    def isLock(self, id:str, rank:int) -> bool:
+        for agent in self.agents.values():
+            if (agent.id != id and 
+                agent.rank > rank and 
+                not agent.isSatisfied):
+                return False
+        return True
+    
+    def endGoal(self, step) -> bool:
+        if self.state[0] == step:
+            return self.state[1]
+        else:
+            for agent in self.agents.values():
+                if not agent.isSatisfied:
+                    self.state(step,False)
+                    return False
+            self.state(step, True)
+            return True
+                
     def __str__(self) -> str:
         result = ""
         for line in self.grid:
