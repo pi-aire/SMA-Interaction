@@ -54,7 +54,8 @@ class Agent(threading.Thread):
         if len(moves) != 0:
             newDistance = [ self.manhattanDist(self.goal,npos) for npos in moves]
             minVal = min(newDistance)
-            return moves[newDistance.index(minVal)]
+            if cDist > minVal:
+                return moves[newDistance.index(minVal)]
         return None
 
     def communication(self, dest:int, p:Performative, m:Message):
