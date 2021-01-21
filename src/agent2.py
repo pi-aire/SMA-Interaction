@@ -33,6 +33,7 @@ class Agent(threading.Thread):
         # On calul le rang de l'agent
         self.rank = (self.env.h - self.goal[0]) * self.env.w
         self.rank -= self.goal[1]
+        self.line = self.goal[0]
         self.isSatisfied = self.pos[0] == self.goal[0] and self.pos[1] == self.goal[1]
 
     def run(self):
@@ -73,7 +74,7 @@ class Agent(threading.Thread):
         """
         Reflexion of the future action
         """
-        if self.isSatisfied and self.env.isLock(self.id,self.rank):
+        if self.isSatisfied and self.env.isLock(self.id,self.rank,self.line):
             return None
         
         needToMove = False
@@ -94,8 +95,10 @@ class Agent(threading.Thread):
                 self.goal, npos) for npos in moves]
             random.shuffle(newDistance)
             minVal = min(newDistance)
+            # if needToMove or (not self.isSatisfied and minVal < cDist):  # On se déplace seulement pour ce rapprocher de l'objectif
             if needToMove or (not self.isSatisfied and minVal < cDist):  # On se déplace seulement pour ce rapprocher de l'objectif
                 return moves[newDistance.index(minVal)]
+        # On continue si on n'a pas de place libre
         
         # on cherche les voisins et on prend celui qui permet de se rapprocher le plus de l'objectif
         neighbours = self.env.neighbours(self.pos, self.rank)

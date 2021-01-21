@@ -2,6 +2,8 @@ from threading import Barrier
 from environnement import *
 from agent2 import *
 import random
+# random.seed(424242) 10
+random.seed(424242) 
 
 def randomPosition(height, width, nbAgent):
     """Retourne des coordonnée unique contenu dans une grille
@@ -10,9 +12,8 @@ def randomPosition(height, width, nbAgent):
     return random.sample(list,nbAgent)
 
 def main():
-    random.seed(424242)
     agentsMap = dict()
-    HEIGHT,WIDTH,NB_AGENT = 5,5,13
+    HEIGHT,WIDTH,NB_AGENT = 5,5,10
     env = Environment(HEIGHT,WIDTH,agentsMap)
     
     ########## Exemple 1
@@ -21,8 +22,8 @@ def main():
     # goals = [(0,0),(0,1),(0,2),(0,3)]
     
     ########## Exemple 2
-    # ids = ["🔴","🔆","⌛","⭐","🤡","🥔","🔥","🏈","👀","🤝","🎄","🧨","✨","🎉","🧧","🎁","🏀","⚽","🎱","🏉","🏆","📞"] # 22
-    ids = ["🔴","🔆","⌛","⭐","🤡","🥔","🔥","🏈","👀","🤝","🎄","🧨","✨"] # 13
+    ids = ["🔴","🔆","⌛","⭐","🤡","🥔","🔥","🏈","👀","🤝","🎄","🧨","✨","🎉","🧧","🎁","🏀","⚽","🎱","🏉","🏆","📞"] # 22
+    ids = ids[:NB_AGENT]
     positions = randomPosition(HEIGHT,WIDTH,NB_AGENT)
     goals = randomPosition(HEIGHT,WIDTH,NB_AGENT)
     

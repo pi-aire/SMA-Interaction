@@ -94,11 +94,17 @@ class Environment(object):
                 moves.append((newx, newy))
         return moves
     
-    def isLock(self, id:str, rank:int) -> bool:
+    def isLock(self, id:str, rank:int, line:int) -> bool:
         for agent in self.agents.values():
+            # On regarde si les agents de rank supérieur sont pas satisfait
             if (agent.id != id and 
                 agent.rank > rank and 
                 not agent.isSatisfied):
+                return False
+            # On regarde s'il n'y a pas d'agent de line plus basse
+            if (agent.id != id and
+                agent.pos[0] <= line and
+                agent.line > line):
                 return False
         return True
     
